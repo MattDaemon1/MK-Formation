@@ -1,0 +1,64 @@
+# ==============================================================================
+# MK Formation — Configuration Apache / LiteSpeed pour Hébergement O2switch
+# ==============================================================================
+
+# 1. Activation du moteur de réécriture
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Forçage HTTPS (Recommandé sur O2switch avec certificat Let's Encrypt)
+  RewriteCond %{HTTPS} !=on
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Routage SPA (Single Page Application)
+  # Si le fichier ou dossier demandé n'existe pas physiquement, renvoyer vers index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# 2. En-têtes de sécurité HTTP (Recommandations Qualiopi & RGPD)
+<IfModule mod_headers.c>
+  # Protection contre le reniflage de type MIME
+  Header set X-Content-Type-Options "nosniff"
+  # Protection contre le clickjacking
+  Header set X-Frame-Options "SAMEORIGIN"
+  # Filtre anti-XSS
+  Header set X-XSS-Protection "1; mode=block"
+  # Politique de Referrer sécurisée
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Désactivation de l'accès aux fonctionnalités sensibles
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# 3. Optimisation du cache pour Vite (Assets hachés)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 month"
+
+  # Pas de cache pour index.html (pour forcer le chargement de la dernière version)
+  <FilesMatch "^index\.html$">
+    ExpiresActive Off
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+
+  # Cache long terme pour les assets générés par Vite (JS, CSS, images avec hash)
+  <FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# 4. Compression Gzip / Deflate pour améliorer les temps de chargement
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# 5. Sécurité : interdire l'accès direct aux fichiers cachés (.env, .git, etc.)
+<FilesMatch "^\.">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
