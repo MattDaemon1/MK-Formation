@@ -1,0 +1,8 @@
+{
+  "name": "MK Formation",
+  "description": "Gestion administrative et pédagogique des formations Matt Konnect — portail sécurisé, catalogue, conventions, émargements et suivi Qualiopi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
